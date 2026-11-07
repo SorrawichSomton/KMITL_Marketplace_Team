@@ -1,0 +1,22 @@
+# Replace @YOUR_GITHUB_USERNAME and @FRIEND_* with real GitHub handles after repo creation.
+* @YOUR_GITHUB_USERNAME
+/frontend/app/login/ @FRIEND_1 @YOUR_GITHUB_USERNAME
+/frontend/app/profile/ @FRIEND_1 @YOUR_GITHUB_USERNAME
+/frontend/features/accounts/ @FRIEND_1 @YOUR_GITHUB_USERNAME
+/backend/app/features/accounts/ @FRIEND_1 @YOUR_GITHUB_USERNAME
+/backend/tests/accounts/ @FRIEND_1 @YOUR_GITHUB_USERNAME
+/frontend/app/listings/ @FRIEND_2 @YOUR_GITHUB_USERNAME
+/frontend/features/catalog/ @FRIEND_2 @YOUR_GITHUB_USERNAME
+/backend/app/features/catalog/ @FRIEND_2 @YOUR_GITHUB_USERNAME
+/backend/tests/catalog/ @FRIEND_2 @YOUR_GITHUB_USERNAME
+/frontend/app/sell/ @FRIEND_3 @YOUR_GITHUB_USERNAME
+/frontend/app/reservations/ @FRIEND_3 @YOUR_GITHUB_USERNAME
+/frontend/features/trading/ @FRIEND_3 @YOUR_GITHUB_USERNAME
+/backend/app/features/trading/ @FRIEND_3 @YOUR_GITHUB_USERNAME
+/backend/tests/trading/ @FRIEND_3 @YOUR_GITHUB_USERNAME
+/frontend/app/messages/ @FRIEND_4 @YOUR_GITHUB_USERNAME
+/frontend/app/reviews/ @FRIEND_4 @YOUR_GITHUB_USERNAME
+/frontend/app/notifications/ @FRIEND_4 @YOUR_GITHUB_USERNAME
+/frontend/features/community/ @FRIEND_4 @YOUR_GITHUB_USERNAME
+/backend/app/features/community/ @FRIEND_4 @YOUR_GITHUB_USERNAME
+/backend/tests/community/ @FRIEND_4 @YOUR_GITHUB_USERNAME

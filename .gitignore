@@ -1,0 +1,25 @@
+# local secrets and environment
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+# caches and generated files
+node_modules/
+.next/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+*.db
+*.sqlite*
+frontend/next-env.d.ts
+frontend/tsconfig.tsbuildinfo
+coverage/
+.DS_Store
+Thumbs.db
