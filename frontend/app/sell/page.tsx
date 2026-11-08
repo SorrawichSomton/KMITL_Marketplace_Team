@@ -1,125 +1,48 @@
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
-from ...listing_service import ListingService
-from ...repositories import SQLAlchemyListingRepository
-from ...database import get_db
-from ...image_storage import save_webp
-from ...models import Favorite, Listing, Reservation, User
-from ...schemas import ListingCreate, ListingPatch
-from ...security import get_current_user
-from ...services import assert_owner, listing_detail, notify, price_drop_alert
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ImagePlus, PackagePlus } from "lucide-react";
+import { api, categories, Listing, locations } from "@/lib/api";
 
-router = APIRouter(prefix='/listings', tags=['Listings'])
-
-
-from ...core.listings_shared import get_listing
-
-@router.post('', status_code=201)
-def create(data: ListingCreate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    item = Listing(seller_id=user.id, **data.model_dump())
-    db.add(item)
-    db.commit()
-    db.refresh(item)
-    return listing_detail(db, item)
-
-
-@router.patch('/{listing_id}')
-def update(listing_id: int, data: ListingPatch, user: User = Depends(get_current_user),
-           db: Session = Depends(get_db)):
-    service = ListingService(SQLAlchemyListingRepository(db))
-    item = service.owner_listing(listing_id, user.id)
-    service.check_editable(item)
-    old_price = item.price
-    for key, value in data.model_dump(exclude_unset=True, exclude_none=True).items():
-        setattr(item, key, value)
-    if item.price < old_price:
-        price_drop_alert(db, item)
-    db.commit()
-    return listing_detail(db, item)
-
-
-@router.delete('/{listing_id}')
-def remove(listing_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    item = ListingService(SQLAlchemyListingRepository(db)).owner_listing(listing_id, user.id)
-    # Soft delete preserves history and referential integrity.
-    item.status = 'removed'
-    db.commit()
-    return {'message': 'ซ่อนประกาศแล้ว'}
-
-
-@router.post('/{listing_id}/images')
-async def upload_image(listing_id: int, file: UploadFile = File(...),
-                       user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    item = get_listing(db, listing_id)
-    assert_owner(item, user.id)
-    if item.status in ('sold', 'removed'):
-        raise HTTPException(409, 'ไม่สามารถเพิ่มรูปภาพให้ประกาศนี้')
-    if len(item.images or []) >= 10:
-        raise HTTPException(400, 'อัปโหลดได้สูงสุด 10 รูป')
-    url = await save_webp(file)
-    item.images = [*(item.images or []), url]
-    db.commit()
-    return {'url': url, 'images': item.images}
-
-
-@router.post('/{listing_id}/reserve')
-def reserve(listing_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    item = get_listing(db, listing_id, lock=True)
-    if item.seller_id == user.id:
-        raise HTTPException(400, 'จองสินค้าตัวเองไม่ได้')
-    if item.status != 'available':
-        raise HTTPException(409, 'สินค้านี้ไม่พร้อมจอง')
-    item.status = 'reserved'
-    booking = Reservation(listing_id=item.id, buyer_id=user.id)
-    db.add(booking)
-    notify(db, item.seller_id, f'มีการจองสินค้า: {item.title}', f'/listings/{item.id}')
-    db.commit()
-    db.refresh(booking)
-    return {'reservation_id': booking.id, 'status': booking.status}
-
-
-@router.post('/{listing_id}/complete')
-def complete(listing_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    item = get_listing(db, listing_id, lock=True)
-    assert_owner(item, user.id)
-    booking = db.scalar(select(Reservation).where(Reservation.listing_id == listing_id,
-                        Reservation.status == 'reserved').with_for_update())
-    if item.status != 'reserved' or not booking:
-        raise HTTPException(409, 'ไม่มีรายการจองที่รอยืนยัน')
-    booking.status = 'completed'
-    item.status = 'sold'
-    notify(db, booking.buyer_id, f'ผู้ขายยืนยันซื้อขายเสร็จสิ้น: {item.title}', f'/listings/{item.id}')
-    db.commit()
-    return {'status': item.status, 'reservation_id': booking.id}
-
-
-@router.post('/{listing_id}/cancel')
-def cancel(listing_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    item = get_listing(db, listing_id, lock=True)
-    booking = db.scalar(select(Reservation).where(Reservation.listing_id == listing_id,
-                        Reservation.status == 'reserved').with_for_update())
-    if item.status != 'reserved' or not booking:
-        raise HTTPException(409, 'ไม่มีรายการจองที่ยกเลิกได้')
-    if user.id not in (item.seller_id, booking.buyer_id):
-        raise HTTPException(403, 'ไม่มีสิทธิ์ยกเลิก')
-    booking.status = 'cancelled'
-    item.status = 'available'
-    notify(db, booking.buyer_id if user.id == item.seller_id else item.seller_id,
-           f'การจองถูกยกเลิก: {item.title}', f'/listings/{item.id}')
-    db.commit()
-    return {'status': item.status}
-
-
-@router.get('/{listing_id}/reservation')
-def reservation_status(listing_id: int, user: User = Depends(get_current_user),
-                       db: Session = Depends(get_db)):
-    item = get_listing(db, listing_id)
-    booking = db.scalar(select(Reservation).where(Reservation.listing_id == listing_id,
-                        Reservation.status.in_(['reserved', 'completed']))
-                       .order_by(Reservation.id.desc()))
-    if not booking or user.id not in (item.seller_id, booking.buyer_id):
-        return {'reservation': None}
-    return {'reservation': {'id': booking.id, 'buyer_id': booking.buyer_id,
-                            'status': booking.status}}
-
+export default function SellPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({ title: "", description: "", price: "", category: categories[0],
+    condition: "used", condition_percent: "90", pickup_location: locations[0] });
+  const [files, setFiles] = useState<File[]>([]);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const update = (key: keyof typeof form, value: string) => setForm(p => ({ ...p, [key]: value }));
+  async function submit(event: React.FormEvent) {
+    event.preventDefault(); setSaving(true); setError("");
+    try {
+      const item = await api<Listing>("/listings", { method: "POST", body: JSON.stringify({
+        ...form, price: Number(form.price), condition_percent: Number(form.condition_percent),
+      }) });
+      for (const file of files) {
+        const data = new FormData(); data.set("file", file);
+        await api(`/listings/${item.id}/images`, { method: "POST", body: data });
+      }
+      router.push(`/listings/${item.id}`);
+    } catch (e) { setError((e as Error).message + " หากสร้างประกาศแล้ว สามารถเข้าหน้าสินค้าเพื่ออัปโหลดรูปต่อได้"); }
+    finally { setSaving(false); }
+  }
+  return <main className="page max-w-[800px]"><div className="mb-7"><span className="text-xs font-bold uppercase tracking-widest text-orange-600">Start selling</span><h1 className="mt-2 text-3xl font-black">ลงขายสินค้าของคุณ</h1><p className="small mt-2">ใส่รายละเอียด → เพิ่มรูปภาพ → กดเผยแพร่</p></div>
+    <form onSubmit={submit} className="panel space-y-6 p-6 md:p-9">
+      <div><h2 className="mb-4 text-lg font-bold">01 / รายละเอียดสินค้า</h2><div className="space-y-4">
+        <div><label className="label">ชื่อสินค้า *</label><input required minLength={3} maxLength={150} className="field" value={form.title} onChange={e => update("title", e.target.value)} placeholder="เช่น หนังสือ Python สภาพดี"/></div>
+        <div><label className="label">รายละเอียดสินค้า *</label><textarea required minLength={5} maxLength={5000} className="field min-h-28" value={form.description} onChange={e => update("description", e.target.value)} placeholder="อธิบายสภาพ อุปกรณ์เสริม จุดเด่น..."/></div>
+        <div className="grid gap-4 md:grid-cols-2"><div><label className="label">ราคา (บาท) *</label><input required type="number" min="1" max="10000000" className="field" value={form.price} onChange={e => update("price", e.target.value)}/></div>
+        <div><label className="label">หมวดหมู่</label><select className="field" value={form.category} onChange={e => update("category", e.target.value)}>{categories.map(x => <option key={x}>{x}</option>)}</select></div>
+        <div><label className="label">สภาพสินค้า</label><select className="field" value={form.condition} onChange={e => update("condition", e.target.value)}><option value="used">มือสอง</option><option value="new">มือหนึ่ง</option></select></div>
+        <div><label className="label">สภาพ (%)</label><input type="number" min="1" max="100" className="field" value={form.condition_percent} onChange={e => update("condition_percent", e.target.value)}/></div></div>
+        <div><label className="label">จุดนัดรับ</label><select className="field" value={form.pickup_location} onChange={e => update("pickup_location", e.target.value)}>{locations.map(x => <option key={x}>{x}</option>)}</select></div>
+      </div></div>
+      <div className="border-t border-slate-100 pt-6"><h2 className="mb-4 text-lg font-bold">02 / รูปภาพสินค้า</h2>
+        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-10 text-center hover:border-orange-300"><ImagePlus size={33} className="text-orange-500"/><strong>เลือกรูปภาพสินค้า</strong><span className="small">สูงสุด 10 รูป JPEG / PNG / WEBP ไม่เกินรูปละ 5 MB</span>
+          <input className="hidden" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => setFiles(Array.from(e.target.files || []).slice(0, 10))}/></label>
+        {files.length > 0 && <p className="mt-3 text-sm text-green-700">เลือกรูปภาพ {files.length} รูปแล้ว</p>}</div>
+      {error && <div className="alert">{error}</div>}
+      <button disabled={saving} className="btn flex w-full items-center justify-center gap-2"><PackagePlus size={18}/>{saving ? "กำลังสร้างประกาศ..." : "03 / เผยแพร่ประกาศ"}</button>
+    </form>
+  </main>;
+}
