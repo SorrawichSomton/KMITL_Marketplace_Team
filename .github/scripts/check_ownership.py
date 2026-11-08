@@ -9,7 +9,7 @@ RULES = {
         "backend/app/features/accounts/", "backend/tests/accounts/",
     ),
     "feature/catalog-": (
-        "frontend/app/listings/", "frontend/features/catalog/",
+        "frontend/app/listings/", "frontend/components/ListingCard.tsx", "frontend/features/catalog/",
         "backend/app/features/catalog/", "backend/tests/catalog/",
     ),
     "feature/trading-": (
@@ -17,7 +17,7 @@ RULES = {
         "backend/app/features/trading/", "backend/tests/trading/",
     ),
     "feature/community-": (
-        "frontend/app/messages/", "frontend/app/reviews/", "frontend/app/notifications/",
+        "frontend/app/messages/", "frontend/app/reviews/", "frontend/app/notifications/", "frontend/app/admin/",
         "frontend/features/community/", "backend/app/features/community/", "backend/tests/community/",
     ),
 }
