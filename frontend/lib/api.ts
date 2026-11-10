@@ -40,3 +40,27 @@ export const locations = ["ตึก ECC", "โรงอาหารพระเ
 export const statusThai: Record<string, string> = {
   available: "พร้อมขาย", reserved: "ติดจอง", sold: "ขายแล้ว", removed: "ระงับประกาศ",
 };
+/**
+ * Check whether the central backend is reachable.
+ * Does not depend on feature-specific routes.
+ */
+export async function checkBackendHealth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_URL}/health`, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (!response.ok) return false;
+
+    const data: unknown = await response.json();
+    return (
+      typeof data === "object" &&
+      data !== null &&
+      "status" in data &&
+      data.status === "ok"
+    );
+  } catch {
+    return false;
+  }
+}

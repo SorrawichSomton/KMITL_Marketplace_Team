@@ -65,20 +65,20 @@ export default function HomePage() {
           <h2 className="text-3xl font-semibold tracking-[-.045em] text-[#2a1a10] md:text-5xl">ค้นพบสิ่งที่ใช่ <span className="font-normal italic text-[#c56a23]">ใกล้ตัวคุณ</span></h2>
           <p className="small mt-4">ค้นหาและเลือกซื้อสินค้าที่เพื่อน ๆ ในมหาวิทยาลัยส่งต่อ</p>
         </div>
-        <Link href="/sell" className="inline-flex items-center gap-2 text-sm font-semibold text-[#b45309] hover:text-[#843b0a]">ลงประกาศสินค้า <ArrowUpRight size={17}/></Link>
+        <Link href="/sell" className="inline-flex items-center gap-2 text-sm font-semibold text-[#b45309] hover:text-[#843b0a]">ลงประกาศสินค้า <ArrowUpRight size={17} /></Link>
       </div>
-      <div className="liquid-glass-filter mb-10 grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr] xl:items-center">
-        <label className="glass-input relative flex items-center gap-2"><Search size={18} className="shrink-0 text-orange-500"/><input aria-label="ค้นหาสินค้า" className="min-w-0 w-full bg-transparent outline-none" placeholder="ค้นหาสินค้า..." value={filters.q} onChange={e => change("q", e.target.value)} /></label>
-        <GlassSelect label="หมวดหมู่" value={filters.category} onChange={value=>change("category",value)} options={[{value:"",label:"ทุกหมวดหมู่"},...categories.map(x=>({value:x,label:x}))]}/>
-        <GlassSelect label="สภาพสินค้า" value={filters.condition} onChange={value=>change("condition",value)} options={[{value:"",label:"ทุกสภาพสินค้า"},{value:"new",label:"มือหนึ่ง"},{value:"used",label:"มือสอง"}]}/>
-        <input aria-label="จุดนัดรับ" className="glass-input w-full" placeholder="จุดนัดรับ" value={filters.pickup_location} onChange={e => change("pickup_location", e.target.value)}/>
+      <div className="liquid-glass-filter relative z-20 mb-10 grid items-center gap-3 p-4 md:grid-cols-2 xl:grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr]">
+        <label className="glass-input relative flex items-center gap-2"><Search size={18} className="shrink-0 text-orange-500" /><input aria-label="ค้นหาสินค้า" className="min-w-0 w-full bg-transparent outline-none" placeholder="ค้นหาสินค้า..." value={filters.q} onChange={e => change("q", e.target.value)} /></label>
+        <GlassSelect label="หมวดหมู่" value={filters.category} onChange={value => change("category", value)} options={[{ value: "", label: "ทุกหมวดหมู่" }, ...categories.map(x => ({ value: x, label: x }))]} />
+        <GlassSelect label="สภาพสินค้า" value={filters.condition} onChange={value => change("condition", value)} options={[{ value: "", label: "ทุกสภาพสินค้า" }, { value: "new", label: "มือหนึ่ง" }, { value: "used", label: "มือสอง" }]} />
+        <input aria-label="จุดนัดรับ" className="glass-input w-full" placeholder="จุดนัดรับ" value={filters.pickup_location} onChange={e => change("pickup_location", e.target.value)} />
         <input aria-label="ราคาสูงสุด" className="glass-input w-full" type="number" min="0" placeholder="ราคาสูงสุด (฿)" value={filters.max_price} onChange={e => change("max_price", e.target.value)} />
-        <GlassSelect label="เรียงลำดับ" value={filters.sort} onChange={value=>change("sort",value)} options={[{value:"newest",label:"มาใหม่ล่าสุด"},{value:"price_asc",label:"ราคาต่ำ → สูง"},{value:"price_desc",label:"ราคาสูง → ต่ำ"}]}/>
+        <GlassSelect label="เรียงลำดับ" value={filters.sort} onChange={value => change("sort", value)} options={[{ value: "newest", label: "มาใหม่ล่าสุด" }, { value: "price_asc", label: "ราคาต่ำ → สูง" }, { value: "price_desc", label: "ราคาสูง → ต่ำ" }]} />
       </div>
       {error && <p className="alert mb-5" role="alert">{error}</p>}
       {loading ? <p className="small py-12 text-center" role="status">กำลังโหลดสินค้า...</p> : items.length ?
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">{items.map(x => <ListingCard key={x.id} item={x}/>)}</div> :
-        <div className="panel flex flex-col items-center gap-3 px-5 py-20 text-center"><SlidersHorizontal className="text-[#c78243]" size={30}/><h3 className="font-bold">ยังไม่มีสินค้าที่ตรงกับคำค้นหา</h3><p className="small">ลองเปลี่ยนตัวกรองหรือเริ่มลงขายสินค้าชิ้นแรก</p></div>}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">{items.map(x => <ListingCard key={x.id} item={x} />)}</div> :
+        <div className="panel flex flex-col items-center gap-3 px-5 py-20 text-center"><SlidersHorizontal className="text-[#c78243]" size={30} /><h3 className="font-bold">ยังไม่มีสินค้าที่ตรงกับคำค้นหา</h3><p className="small">ลองเปลี่ยนตัวกรองหรือเริ่มลงขายสินค้าชิ้นแรก</p></div>}
     </div>
     <section aria-labelledby="faq-heading" className="mt-20 border-t border-[#f0e1d1] bg-[#f8efe6] px-5 py-20 md:py-24">
       <div className="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start lg:gap-16">
