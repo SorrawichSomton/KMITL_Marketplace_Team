@@ -44,6 +44,11 @@ BASELINE_BRANCH = "chore/integrate-tested-baseline"
 BASELINE_PR_NUMBER = "6"
 BASELINE_REPOSITORY = "SorrawichSomton/KMITL_Marketplace_Team"
 BASELINE_TARGET = "main"
+# One-time team integration PR.
+TEAM_BRANCH = "integrate/team"
+TEAM_PR_NUMBER = "16"
+TEAM_REPOSITORY = "SorrawichSomton/KMITL_Marketplace_Team"
+TEAM_TARGET = "main"
 
 
 def changed_paths(base: str, head: str) -> list[str]:
@@ -66,7 +71,14 @@ def is_baseline_integration(branch: str) -> bool:
         and os.environ.get("BASE_BRANCH") == BASELINE_TARGET
     )
 
-
+def is_team_integration(branch: str) -> bool:
+    return (
+        branch == TEAM_BRANCH
+        and os.environ.get("PR_NUMBER") == TEAM_PR_NUMBER
+        and os.environ.get("GITHUB_REPOSITORY") == TEAM_REPOSITORY
+        and os.environ.get("BASE_BRANCH") == TEAM_TARGET
+    )
+    
 def main() -> int:
     branch = os.environ.get("HEAD_BRANCH", "")
     base = os.environ.get("BASE_SHA")
@@ -119,7 +131,40 @@ def main() -> int:
             f"{len(changed)} changed paths checked."
         )
         return 0
+        
+        # Allow only team integration PR #16.
+    if is_team_integration(branch):
+        forbidden_parts = (
+            "/node_modules/",
+            "/.venv/",
+            "/.next/",
+            "/__pycache__/",
+            "/uploads/",
+        )
 
+        forbidden = [
+            path for path in changed
+            if (
+                path in ("backend/.env", "frontend/.env.local")
+                or path.endswith((".db", ".sqlite", ".sqlite3", ".pyc"))
+                or any(part in f"/{path}" for part in forbidden_parts)
+            )
+        ]
+
+        if forbidden:
+            print(
+                "Forbidden files in team integration PR:",
+                *forbidden,
+                sep="\n - ",
+                file=sys.stderr,
+            )
+            return 1
+
+        print(
+            f"Team integration PR #{TEAM_PR_NUMBER}: "
+            f"{len(changed)} changed paths checked."
+        )
+        return 0
     if branch.startswith("feature/owner-"):
         print("Owner integration PR: shared paths permitted")
         return 0
