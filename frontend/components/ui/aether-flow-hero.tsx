@@ -173,10 +173,10 @@ export default function AetherFlowHero() {
         <Sparkles size={14} className="text-orange-300" /> CAMPUS MARKETPLACE · KMITL
       </motion.div>
       <motion.h1 {...rise(0.17)} className="max-w-[940px] text-[clamp(3.2rem,8vw,7.25rem)] font-semibold leading-[1.08] tracking-[-.07em]">
-        Good things. <span className="bg-gradient-to-r from-[#ffd1a1] via-[#ff9a57] to-[#ffe3c2] bg-clip-text text-transparent">New stories.</span>
+        Good Things, <span className="bg-gradient-to-r from-[#ffd1a1] via-[#ff9a57] to-[#ffe3c2] bg-clip-text text-transparent">New Stories.</span>
       </motion.h1>
       <motion.p {...rise(0.29)} className="mt-8 max-w-[620px] text-base leading-8 text-[#e6c7ad] md:text-lg">
-        ส่งต่อของดีให้คนใกล้ตัว ซื้อขายหนังสือ ไอเท็ม และของใช้ในรั้ว สจล. อย่างง่ายดาย ผ่านชุมชนที่ยืนยันตัวตนได้
+        ส่งต่อของดีให้คนใกล้ตัว ซื้อขายหนังสือ เสื้อผ้า และของใช้ในรั้ว สจล. อย่างง่ายดาย ผ่านชุมชนที่ยืนยันตัวตนได้
       </motion.p>
       <motion.div {...rise(0.41)} className="mt-9 flex flex-wrap items-center justify-center gap-3">
         <a href="#browse" className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#2a1608] shadow-[0_12px_35px_rgba(0,0,0,.2)] transition hover:bg-orange-100">เลือกดูสินค้า <ArrowUpRight size={18} /></a>

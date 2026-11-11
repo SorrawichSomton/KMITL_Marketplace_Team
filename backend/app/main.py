@@ -25,12 +25,35 @@ async def lifespan(app: FastAPI):
         if not settings.database_url.startswith('sqlite') or settings.smtp_host:
             raise RuntimeError('Local demo requires SQLite and no SMTP')
     if settings.is_production:
-        if len(settings.secret_key) < 32 or 'dev-' in settings.secret_key or 'replace-' in settings.secret_key:
-            raise RuntimeError('Production SECRET_KEY must be a strong random secret')
-        if not settings.smtp_host:
-            raise RuntimeError('Production requires SMTP settings')
+        if (
+            len(settings.secret_key) < 32
+            or 'dev-' in settings.secret_key
+            or 'replace-' in settings.secret_key
+        ):
+            raise RuntimeError(
+                'Production SECRET_KEY must be a strong random secret'
+            )
+
+        demo_ready = (
+            settings.demo_login_enabled
+            and len(settings.demo_login_code) >= 24
+        )
+
+        if settings.demo_login_enabled and not demo_ready:
+            raise RuntimeError(
+                'Demo login requires a code of at least 24 characters'
+            )
+
+        if not settings.smtp_host and not demo_ready:
+            raise RuntimeError(
+                'Production requires SMTP or demo login'
+            )
+
         if settings.database_url.startswith('sqlite'):
-            raise RuntimeError('Production requires PostgreSQL')
+            raise RuntimeError(
+                'Production requires PostgreSQL'
+            )
+
     # MVP only. Replace create_all with Alembic migrations before production release.
     Base.metadata.create_all(bind=engine)
     yield
