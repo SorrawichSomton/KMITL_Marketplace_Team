@@ -1,156 +1,137 @@
-# KMITL Marketplace — Software Design and Development 2
+KMITL Marketplace 🛒
+โครงงานรายวิชา Software Design and Development 2
+เว็บแอปพลิเคชันสำหรับซื้อขายและส่งต่อสินค้าระหว่างนักศึกษาและบุคลากรของ สจล.
 
-**Stack:** Next.js (React) + Tailwind CSS, Python FastAPI, PostgreSQL, Docker Compose, GitHub Actions CI/CD.
+โปรเจกต์นี้เป็น ต้นแบบเพื่อการศึกษา (Academic Project) ไม่ใช่เว็บไซต์ทางการของสถาบัน โดยมีฟีเจอร์หลัก เช่น การเข้าสู่ระบบ การลงประกาศสินค้า การค้นหา/กรองสินค้า การอัปโหลดภาพ และส่วนที่เกี่ยวข้องกับการติดต่อซื้อขาย
 
-This is a functional **academic MVP source project**, not a finished public service and not an official KMITL website. Source requirements: `docs/Original_Requirement.txt`.
+เอกสารนี้เขียนสำหรับอาจารย์หรือผู้ทดลองที่ได้รับไฟล์ ZIP ของโครงงาน สามารถทำตามเพื่อเปิดเว็บไซต์บน Windows 10/11 ได้ โดยไม่จำเป็นต้องมีบัญชี Railway หรือ GitHub
+1. โปรแกรมที่ต้องติดตั้ง
+โปรแกรม	ใช้ทำอะไร	จำเป็นไหม
+Python 3.12	รัน Backend (FastAPI)	จำเป็น
+Node.js 22 LTS ขึ้นไป (มี npm)	รัน Frontend (Next.js)	จำเป็น
+VS Code	เปิดโฟลเดอร์โครงงานและ Terminal	แนะนำ
+Google Chrome / Microsoft Edge	เปิดหน้าเว็บไซต์และทดสอบ Animation	แนะนำ
+Git	ดูประวัติ/ทำงานร่วมกันผ่าน GitHub	ไม่จำเป็นสำหรับ ZIP
+Docker Desktop	ใช้สำหรับสภาพแวดล้อม Container หรือการสาธิต Deployment	ไม่จำเป็นสำหรับ Local Demo
 
-## Quick start on Windows / VS Code (recommended: Docker Desktop)
 
-1. Install **Docker Desktop**, VS Code and Git. Open this folder in VS Code.
-2. Open VS Code terminal **at the root `KMITL_Marketplace`** (contains `docker-compose.yml`).
-3. Run:
+เว็บไซต์ดาวน์โหลด: Python · Node.js · VS Code · Docker
+ขณะติดตั้ง Python บน Windows ให้เปิดตัวเลือก Add Python to PATH ถ้ามี และหลังติดตั้งโปรแกรมให้ปิด/เปิด Terminal ใหม่
 
-```bash
-docker compose up --build
-```
+ตรวจสอบการติดตั้งด้วยคำสั่งใน PowerShell:
+python --version
+node --version
+npm --version
+การติดตั้งแพ็กเกจครั้งแรกต้องใช้อินเทอร์เน็ต เพื่อดาวน์โหลด Python packages และ npm packages แต่หลังเตรียมเครื่องแล้ว การสาธิตผ่าน localhost ไม่จำเป็นต้องพึ่ง Railway หรือบริการส่งอีเมลจริง
+2. เตรียมโฟลเดอร์หลังแตก ZIP (ทำครั้งแรก)
+1. แตกไฟล์ ZIP ของโครงงานออกมาเป็นโฟลเดอร์ปกติ ไม่รันจากในหน้าต่าง ZIP โดยตรง
+2. เปิด VS Code แล้วเลือก File → Open Folder ไปยังโฟลเดอร์ที่มี backend, frontend และ docker-compose.yml
+3. เปิด Terminal → New Terminal (แนะนำ PowerShell)
+4. สร้างไฟล์ตั้งค่าจากตัวอย่าง โดยรันที่โฟลเดอร์หลักของโปรเจกต์:
+Copy-Item .\backend\.env.example .\backend\.env
+Copy-Item .\frontend\.env.example .\frontend\.env.local
+สำคัญ: หาก ZIP ไม่มี backend/.env เป็นเรื่องปกติ เพราะไม่ควรแนบค่า Secret จากเครื่องผู้พัฒนาไปด้วย วิธีที่ถูกต้องคือคัดลอกจาก .env.example ตามขั้นตอนข้างบน
 
-4. Wait for services to start and open:
-   - Frontend: http://localhost:3000
-   - Interactive API Docs: http://localhost:8000/docs
-   - Backend health: http://localhost:8000/health
-5. Log in using `student01@kmitl.ac.th` (an **example address**, not a real credential). In *local development mode without SMTP*, OTP appears **on the login page**. It is deliberately not delivered to email until you configure SMTP.
-6. Sell a listing, then use a second browser session/incognito window to log in as `student02@kmitl.ac.th`, reserve and chat. The seller can confirm Sold, then the buyer can review.
-7. Stop with `Ctrl+C`; to delete local containers and database data **only if you intentionally want a reset**: `docker compose down -v`.
+ใน backend/.env สำหรับการทดลองในเครื่อง ให้ตรวจว่ามีค่าประมาณนี้ (เป็นค่า Local Demo ไม่ใช่ Production):
 
-**NOTE:** Docker image builds require internet for pulling container images and npm/pip packages. They could not be performed in this isolated environment; see **Testing status** below.
+ENV=local_demo
+DATABASE_URL=sqlite:///./marketplace_demo.db
+SECRET_KEY=local-demo-only-not-for-production-change-me-1234
+FRONTEND_ORIGINS=http://localhost:3000
+API_PUBLIC_URL=http://localhost:8000
+SMTP_HOST=
 
-## Manual setup without Docker (quick backend-only demo with SQLite)
+ใน frontend/.env.local ให้มี:
+NEXT_PUBLIC_API_URL=http://localhost:8000
 
-```powershell
+อย่านำโหมด local_demo หรือค่า Secret ตัวอย่างไปเปิดบนเว็บไซต์สาธารณะ เพราะ OTP จำลองไม่ได้พิสูจน์ว่าเป็นเจ้าของอีเมลจริง
+3. วิธีเปิดโปรแกรมแบบง่ายที่สุด (Windows)
+ต้องเปิด 2 Terminal และปล่อยให้ทั้งสองหน้าต่างทำงานค้างไว้
+
+Terminal 1 — เปิด Backend (เริ่มที่โฟลเดอร์หลัก):
+powershell -ExecutionPolicy Bypass -File .\START_BACKEND_DEMO.ps1
+สคริปต์จะติดตั้ง Python dependencies จาก backend/requirements.txt แล้วเปิด FastAPI ที่ http://127.0.0.1:8000
+
+Terminal 2 — เปิด Frontend (เปิด Terminal ใหม่ที่โฟลเดอร์หลัก):
+powershell -ExecutionPolicy Bypass -File .\START_FRONTEND_DEMO.ps1
+สคริปต์จะติดตั้ง npm packages หากยังไม่มี แล้วเปิด Next.js ที่ http://localhost:3000
+
+จากนั้นเปิดใน Browser:
+ลิงก์	ใช้ดูอะไร
+http://localhost:3000	หน้าเว็บไซต์และ UI/Animation
+http://localhost:3000/login	หน้าเข้าสู่ระบบ
+http://localhost:8000/health	เช็ก Backend; ควรเห็น {"status":"ok"}
+http://localhost:8000/docs	หน้าทดลอง API (Swagger UI)
+
+
+ถ้าไม่มีไฟล์ START_BACKEND_DEMO.ps1 หรือ START_FRONTEND_DEMO.ps1 ใน ZIP ให้ใช้วิธีเปิดเองในข้อ 4 แทน
+
+4. ถ้าต้องการเปิดเองโดยไม่ใช้สคริปต์
+วิธีนี้เหมาะเมื่อสคริปต์เปิดไม่ได้หรืออยากเห็นขั้นตอนชัด ๆ
+
+Terminal 1 — Backend (เริ่มที่โฟลเดอร์หลัก):
 cd backend
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item .env.example .env
-```
-
-Change `DATABASE_URL` in `backend/.env` to `sqlite:///./marketplace.db` **for local development only**. Then:
-
-```powershell
-python -m uvicorn app.main:app --reload --port 8000
-```
-
-Open another terminal:
-
-```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+Terminal 2 — Frontend (เปิด Terminal ใหม่ที่โฟลเดอร์หลัก):
 cd frontend
-Copy-Item .env.example .env.local
 npm install
 npm run dev
-```
+เมื่อเปิดสำเร็จ ให้เข้า http://localhost:3000 จาก Browser
+ถ้าเคยติดตั้งแพ็กเกจแล้ว การเปิดครั้งต่อไปไม่ต้องรัน pip install และ npm install ใหม่ทุกครั้ง
 
-If you want actual PostgreSQL instead of SQLite, keep the PostgreSQL URL in `.env` and launch a compatible PostgreSQL server at localhost:5432 with the configured database/user/password, or use Docker Compose.
+5. วิธีเปิดดู UI และ Animation ✨
+ไม่ต้องติดตั้ง Animation แยก เพราะ Frontend ใช้ React, Tailwind CSS, Framer Motion และ Canvas ที่รวมอยู่ในโค้ด/แพ็กเกจของโปรเจกต์แล้ว
+1. เปิด Backend และ Frontend ตามข้อ 3 หรือ 4 ก่อน
+2. เปิด http://localhost:3000 จะเห็นหน้า Home พร้อมส่วน Hero และข้อความ “Good Things, New Stories.” (ข้อความอาจต่างเล็กน้อยตามเวอร์ชันโค้ด)
+3. ลอง เลื่อนเมาส์บริเวณ Hero เพื่อดูอนุภาคและเส้นแสงตอบสนองต่อเมาส์
+4. ลอง สลับโหมด Dark / Light ที่ปุ่มสลับธีมบนแถบเมนูด้านบน เพื่อดูเอฟเฟกต์ Liquid Glass
+5. เลื่อนลง ไปยังส่วนค้นหาและตัวกรองสินค้า ทดลองคลิกตัวเลือกหมวดหมู่/สภาพสินค้า
+6. เลื่อนลงไปส่วน FAQ แล้วคลิกเปิด–ปิดคำถาม เพื่อดู Animation ของ Accordion
+ไฟล์ส่วน UI ที่เกี่ยวข้อง (สำหรับผู้ต้องการดู Source Code):
+- frontend/components/ui/aether-flow-hero.tsx — อนุภาค/เส้นแสงและ Animation หน้าแรก
+- frontend/components/ui/liquid-glass-toggle.tsx — สวิตช์และเอฟเฟกต์ Liquid Glass
+- frontend/components/theme-toggle.tsx และ theme-provider.tsx — ระบบเปลี่ยนธีม
+- frontend/components/ui/glass-select.tsx — ตัวกรองแบบ Glass UI
+- frontend/components/ui/liquid-glass-accordion.tsx และ marketplace-faq.tsx — FAQ แบบยุบ/ขยาย
+- frontend/app/globals.css — สไตล์ สี และเอฟเฟกต์โดยรวม
+หมายเหตุเรื่อง Animation: บางระบบอาจตั้งค่า Reduce Motion เพื่อลดการเคลื่อนไหว ซึ่งหน้าเว็บจะเคารพค่านี้และแสดง Animation น้อยลงหรือเป็นภาพนิ่งตามการออกแบบ ไม่ใช่ข้อผิดพลาดของระบบ
 
-## Project tree
+ที่มาของ UI: งานบางส่วนใช้แนวคิด/Component จาก 21st.dev เป็นตัวอย่างตั้งต้น แล้วปรับรูปแบบ สี ข้อความ และการเชื่อมต่อให้เข้ากับ KMITL Marketplace ควรอ้างอิง Component ต้นฉบับและตรวจเงื่อนไข License ของแต่ละรายการก่อนนำไปใช้เผยแพร่จริง
+6. วิธีทดลองฟีเจอร์หลักแบบ Local Demo
+1. เข้า http://localhost:3000/login
+2. ใส่อีเมลตัวอย่าง เช่น demo@kmitl.ac.th แล้วกดขอ OTP
+3. ในโหมด Local Demo จะมี OTP จำลอง 6 หลัก แสดงบนหน้าเว็บ ไม่ต้องรออีเมลจริง
+4. นำรหัสนั้นมากรอกเพื่อยืนยัน แล้วเข้าสู่หน้า ลงขายสินค้า
+5. กรอกชื่อสินค้า ราคา รายละเอียด เพิ่มรูปภาพ และบันทึกประกาศ
+6. กลับไปหน้าแรก ลองค้นหาสินค้า หรือเปิดหน้ารายละเอียดของสินค้าที่เพิ่งลงขาย
+หากต้องการสาธิต Error Handling สามารถลองกรอก OTP ผิด หรือขอ OTP ซ้ำเร็วเกินไปได้ ระบบจะตอบกลับข้อความแจ้งข้อผิดพลาดตามเงื่อนไขที่กำหนด
+โหมดนี้จำกัดการใช้ OTP จำลองไว้กับเครื่องที่รัน Backend เอง ไม่เหมาะสำหรับนำขึ้น Hosting สาธารณะ
 
-```text
-KMITL_Marketplace/
-├── frontend/
-│   ├── app/                   # Next.js App Router pages
-│   ├── components/            # Reusable navigation and listing cards
-│   ├── lib/api.ts             # Browser API client + shared types
-│   └── Dockerfile
-├── backend/
+7. ปิดโปรแกรมและแก้ปัญหาเบื้องต้น
+- ปิดโปรแกรม: กลับไปยัง Terminal ทั้งสองหน้าต่างแล้วกด Ctrl + C
+- เปิดเว็บไม่ขึ้น: ตรวจว่า Backend และ Frontend ยังรันอยู่ และเปิด http://localhost:3000 ไม่ใช่ลิงก์ Railway
+- Backend แจ้ง Missing backend/.env: ทำขั้นตอนคัดลอก .env.example ในข้อ 2
+- python หรือ npm ไม่พบคำสั่ง: ตรวจว่าติดตั้ง Python และ Node.js แล้ว จากนั้นเปิด Terminal ใหม่
+- Port 3000 หรือ 8000 ถูกใช้: ปิดโปรแกรมที่เปิดพอร์ตเดิมก่อน แล้วจึงรันอีกครั้ง
+- OTP ไม่ขึ้น: ตรวจว่า ENV=local_demo, DATABASE_URL ใช้ SQLite, SMTP_HOST ว่าง และเรียกผ่าน localhost เท่านั้น
+- หน้าเว็บขึ้นแต่รายการสินค้าไม่โหลด: เปิด http://localhost:8000/health เพื่อตรวจ Backend และดู Error ใน Terminal
+- Animation ไม่เคลื่อนไหว: ลองรีเฟรชหน้าเว็บ ตรวจการตั้งค่า Reduce Motion และทดสอบบน Chrome/Edge รุ่นปัจจุบัน
+8. โครงสร้างโฟลเดอร์โดยย่อ
+KMITL_Marketplace_Team/
+├── backend/                 Python / FastAPI / SQLAlchemy / Tests
 │   ├── app/
-│   │   ├── main.py            # Application, middleware, WebSocket
-│   │   ├── database.py        # SQLAlchemy engine and sessions
-│   │   ├── models.py          # OOP/ORM entities
-│   │   ├── schemas.py         # Request validation
-│   │   ├── security.py        # OTP, email and JWT session
-│   │   ├── repositories.py    # ListingRepository Protocol + implementation
-│   │   ├── listing_service.py # SOLID business rules
-│   │   ├── realtime.py        # Chat event fanout
-│   │   └── routers/           # Auth, users, listings, community
-│   ├── tests/                 # Pytest
-│   └── Dockerfile
-├── .github/workflows/ci-cd.yml
-├── docker-compose.yml
-└── docs/                       # Class/DFD/Threat/Risk/Traceability/Git/Slides
-```
-
-## What is implemented in this MVP
-
-- Institutional email OTP, 5-minute expiry, HMAC at rest, cooldown and attempt counter. Demo OTP displayed only when `ENV=development` and SMTP is not configured.
-- Verified login, profile editing, signed JWT HttpOnly cookie with 12-hour expiration, CORS and CSRF Origin check.
-- Product CRUD with ownership, images (0–10; WebP compressed upload, 5 MB limit), searchable listings, categories, price, condition, pickup location and sort.
-- Booking state transitions `available -> reserved -> sold`, cancel reservation, booking eligibility for reviews.
-- Messages between buyer and seller via REST + WebSocket event notifications in a single backend worker; message types text, HTTPS image URL and pickup-location text.
-- Reviews, seller averages, favorites, in-app notifications for chat/reservations/price changes, reports and admin moderation endpoints.
-- Docker Compose with PostgreSQL, GitHub Actions CI file and conditional CD deploy hooks.
-- Architecture, DFD, STRIDE, asset list, risk register, traceability matrix, slides plan and Git workflow guidance.
-
-## Explicit limitations (required before claiming full completion)
-
-- **Not verified**: real production SMTP, Render/Vercel deployment, HTTPS/TLS 1.3, target 2-second response, 1,000 concurrent users, 99.5% availability.
-- **Not implemented**: Firebase push notifications, native map pin integration, true image sending in chat (currently image HTTPS links), cloud object storage and dedicated SSO.
-- WebSocket realtime events use in-memory fanout and one worker; cross-worker Redis pub/sub is a future improvement.
-- Admin decisions lack immutable audit logs. Image storage in Docker is persisted via volume; on hosted platforms, deploy a persistent disk or implement S3/Cloudinary before real use.
-- Database tables are created with `create_all()` for ease of local setup; add Alembic migrations before production.
-- Git commit history, PR reviews, GitHub Actions logs and public URLs are not fabricated and must be collected from a real team repository/deployment.
-- Security review, accessibility, browser compatibility and load/penetration tests require further verification.
-
-## Automated tests
-
-```bash
-cd backend
-pytest -q tests
-```
-
-For quality checks:
-
-```bash
-ruff check app tests --select E4,E7,E9,F
-# in frontend
-npm run lint
-npm run typecheck
-npm run build
-```
-
-The 8 backend pytest tests succeeded locally with SQLite. Frontend npm install/build and PostgreSQL-in-Docker were **not run in the isolated environment**, which had no external npm network access or Docker binary. GitHub Actions can validate them after pushing to GitHub.
-
-## Configure production services
-
-Backend hosting (e.g. Render) needs `ENV=production`, `DATABASE_URL=postgresql+psycopg://...`, `SECRET_KEY` (secure random 32+ chars), `FRONTEND_ORIGINS=https://your-web-domain`, `API_PUBLIC_URL=https://your-backend-domain`, SMTP_HOST/PORT/USERNAME/PASSWORD/FROM and storage persistence.
-
-Frontend hosting (e.g. Vercel) needs `NEXT_PUBLIC_API_URL=https://your-backend-domain` **at build time**. `frontend` is the Root Directory.
-
-Cookies use `SameSite=None; Secure` in production because the web and API may be on different domains. Some browsers block third-party cookies: for reliable production use, prefer **custom subdomains under one site** and design a same-origin proxy. HTTPS must be supplied by the hosting reverse proxy and validated via an external browser test; code alone does not enforce TLS 1.3.
-
-### CI and CD setup (40%-weighted security coursework)
-
-1. Create a GitHub repository and push this folder.
-2. Set branch protection for `main` and require CI checks.
-3. Create Render backend project and Vercel frontend project linked to the repository, set their environment variables.
-4. Create a Render deploy hook and a Vercel deploy hook for main and store them in **GitHub Actions Repository Secrets** as `RENDER_DEPLOY_HOOK_URL` and `VERCEL_DEPLOY_HOOK_URL`. Do not commit them to source control. Optionally set `PUBLIC_API_HEALTH_URL`.
-5. Open a PR; CI should lint/test/build. Merge to `main`; CD job invokes configured hooks. Capture actual run logs and successful public website as **evidence**, not merely a pipeline YAML screenshot.
-6. Avoid duplicate deployments: if using Git integration auto-deploy, turn off automatic deploys where you want GitHub Actions gates to control releases. Also record that deploy hooks trigger asynchronous builds; success of curl **does not guarantee** the new version is live.
-
-External references: https://render.com/docs/deploy-hooks and https://vercel.com/docs/deploy-hooks .
-
-## Git collaboration & instructor artifacts
-
-- `docs/ARCHITECTURE.md` — system component/layers and class diagram, 2 real code examples demonstrating SOLID.
-- `docs/THREAT_MODEL.md` — DFD, trust boundaries, STRIDE, misuse cases, asset list and derived SR.
-- `docs/RISK_REGISTER.md` — 12 scored risks and proposed owners.
-- `docs/TRACEABILITY_MATRIX.md` — requirement → code/control → test → verified status.
-- `docs/GIT_WORKFLOW.md` — sample branching, PR procedure and evidence checklist (**samples are not real commits**).
-- `docs/PRESENTATION_PLAN_TH.md` — slide-by-slide Thai plan for both professors and live-demo script.
-
-## Suggested team division
-
-- Person A: Frontend/UI, responsive layout, browser validation.
-- Person B: Backend models, auth and listings / SOLID refactoring.
-- Person C: Chat, reviews, reports and integration tests.
-- Person D: STRIDE, risk, GitHub PR reviews, CI/CD and deployment.
-
-Members should each create feature branches and genuine commits. Every PR should pass CI and include screenshots and security checks. See `docs/GIT_WORKFLOW.md`.
+│   ├── requirements.txt
+│   └── .env.example
+├── frontend/                Next.js / React / TypeScript / UI Animation
+│   ├── app/
+│   ├── components/
+│   ├── package.json
+│   └── .env.example
+├── .github/workflows/       GitHub Actions (CI)
+├── docs/                    เอกสารการออกแบบและความปลอดภัย (ถ้ามี)
+├── docker-compose.yml      Container setup
+├── START_BACKEND_DEMO.ps1   เปิด Backend สำหรับ Local Demo
+├── START_FRONTEND_DEMO.ps1  เปิด Frontend สำหรับ Local Demo
+└── README.md                คู่มือฉบับนี้
